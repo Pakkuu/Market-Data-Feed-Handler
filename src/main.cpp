@@ -1,10 +1,13 @@
 #include <iostream>
+#include <iomanip>
 #include "market_tick.h"
 #include "lockfree_queue.h"
 #include "tick_generator.h"
+#include "analytics.h"
 
 int main() {
     std::cout << "=== Market Data Feed Handler - Component Tests ===" << std::endl;
+    std::cout << std::fixed << std::setprecision(4);
     
     // Test 1: MarketTick creation
     std::cout << "\n[Test 1] MarketTick Structure" << std::endl;
@@ -71,6 +74,32 @@ int main() {
     std::cout << "Generated " << batch.size() << " ticks" << std::endl;
     std::cout << "First tick price: $" << batch.front().price << std::endl;
     std::cout << "Last tick price: $" << batch.back().price << std::endl;
+    
+    // Test 5: Analytics Engine
+    std::cout << "\n[Test 5] Analytics Engine" << std::endl;
+    market::AnalyticsEngine analytics(100);  // 100-tick rolling average
+    
+    // Create test data with known values
+    std::cout << "Processing 500 synthetic ticks..." << std::endl;
+    market::TickGenerator test_gen("SPY", 100.0, 0.01, 100, 500, 123);
+    for (int i = 0; i < 500; i++) {
+        auto tick = test_gen.generateTick();
+        analytics.processTick(tick);
+    }
+    
+    std::cout << "\n--- Analytics Results ---" << std::endl;
+    std::cout << "Ticks processed: " << analytics.getTickCount() << std::endl;
+    std::cout << "VWAP: $" << analytics.getVWAP() << std::endl;
+    std::cout << "Rolling Avg (100 ticks): $" << analytics.getRollingAverage() << std::endl;
+    std::cout << "Buy Volume: " << analytics.getBuyVolume() << " shares" << std::endl;
+    std::cout << "Sell Volume: " << analytics.getSellVolume() << " shares" << std::endl;
+    std::cout << "Trade Imbalance: " << analytics.getImbalance() << " shares";
+    if (analytics.getImbalance() > 0) {
+        std::cout << " (buy pressure)";
+    } else if (analytics.getImbalance() < 0) {
+        std::cout << " (sell pressure)";
+    }
+    std::cout << std::endl;
     
     std::cout << "\n=== All Tests Passed! ===" << std::endl;
     return 0;
