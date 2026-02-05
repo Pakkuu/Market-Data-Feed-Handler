@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 namespace benchmark {
 
@@ -232,6 +233,11 @@ struct BenchmarkResults {
         file.close();
     }
 };
+
+/**
+ * @brief Run comprehensive benchmarks comparing lock-free vs mutex queues
+ */
+void runComprehensiveBenchmarks();
 
 } // namespace benchmark
 
