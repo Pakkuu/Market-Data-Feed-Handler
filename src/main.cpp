@@ -1,9 +1,12 @@
 #include <iostream>
 #include <iomanip>
+#include <thread>
 #include "market_tick.h"
 #include "lockfree_queue.h"
+#include "mutex_queue.h"
 #include "tick_generator.h"
 #include "analytics.h"
+#include "benchmark.h"
 
 int main() {
     std::cout << "=== Market Data Feed Handler - Component Tests ===" << std::endl;
@@ -101,8 +104,56 @@ int main() {
     }
     std::cout << std::endl;
     
+    // Test 6: Benchmark Infrastructure
+    std::cout << "\n[Test 6] Benchmark Infrastructure" << std::endl;
+    
+    // Test latency tracker
+    benchmark::LatencyTracker lat_tracker;
+    std::cout << "Testing latency tracker with sample data..." << std::endl;
+    for (int i = 0; i < 1000; i++) {
+        lat_tracker.addLatency(1.0 + (i % 100) * 0.1);  // Sample latencies
+    }
+    
+    std::cout << "  Mean: " << lat_tracker.getMean() << " μs" << std::endl;
+    std::cout << "  P50:  " << lat_tracker.getP50() << " μs" << std::endl;
+    std::cout << "  P99:  " << lat_tracker.getP99() << " μs" << std::endl;
+    std::cout << "  P999: " << lat_tracker.getP999() << " μs" << std::endl;
+    
+    // Test throughput meter
+    benchmark::ThroughputMeter throughput;
+    std::cout << "\nTesting throughput meter..." << std::endl;
+    throughput.start();
+    for (int i = 0; i < 10000; i++) {
+        throughput.addItem();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    throughput.stop();
+    
+    std::cout << "  Processed: " << throughput.getItemCount() << " items" << std::endl;
+    std::cout << "  Duration:  " << throughput.getElapsedSeconds() << " seconds" << std::endl;
+    std::cout << "  Throughput: " << static_cast<int>(throughput.getThroughput()) << " items/sec" << std::endl;
+    
+    // Test mutex queue
+    std::cout << "\n[Test 7] Mutex Queue" << std::endl;
+    lockfree::MutexQueue<market::MarketTick> mutex_queue;
+    
+    std::cout << "Testing mutex-based queue..." << std::endl;
+    for (int i = 0; i < 5; i++) {
+        market::MarketTick t("MSFT", 300.0 + i, 200, (i % 2 == 0) ? 'B' : 'S', 
+                             market::getCurrentTimeNanos());
+        mutex_queue.push(t);
+    }
+    
+    count = 0;
+    while (auto t_opt = mutex_queue.pop()) {
+        count++;
+    }
+    std::cout << "  Pushed and popped " << count << " ticks successfully" << std::endl;
+    std::cout << "  Queue is " << (mutex_queue.empty() ? "empty" : "NOT empty") << std::endl;
+    
     std::cout << "\n=== All Tests Passed! ===" << std::endl;
     return 0;
 }
+
 
 
