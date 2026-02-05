@@ -16,6 +16,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # Source files
 set(SOURCES
     src/main.cpp
+    src/tick_generator.cpp
 )
 
 # Executable

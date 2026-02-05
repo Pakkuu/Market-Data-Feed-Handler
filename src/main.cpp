@@ -1,6 +1,7 @@
 #include <iostream>
 #include "market_tick.h"
 #include "lockfree_queue.h"
+#include "tick_generator.h"
 
 int main() {
     std::cout << "=== Market Data Feed Handler - Component Tests ===" << std::endl;
@@ -49,7 +50,30 @@ int main() {
     // Verify empty
     std::cout << "Queue is " << (queue.empty() ? "empty" : "NOT empty") << std::endl;
     
+    // Test 4: Tick Generator
+    std::cout << "\n[Test 4] Tick Generator" << std::endl;
+    market::TickGenerator generator("TSLA", 250.0, 0.05, 100, 1000, 42);
+    
+    std::cout << "Generating 10 ticks with random walk..." << std::endl;
+    for (int i = 0; i < 10; i++) {
+        auto tick = generator.generateTick();
+        std::cout << "  Tick #" << (i+1) << ": " << tick.symbol 
+                  << " @ $" << tick.price 
+                  << " vol:" << tick.volume 
+                  << " side:" << tick.side << std::endl;
+    }
+    
+    std::cout << "Final price: $" << generator.getCurrentPrice() << std::endl;
+    
+    // Test batch generation
+    std::cout << "\nGenerating batch of 1000 ticks..." << std::endl;
+    auto batch = generator.generateTicks(1000);
+    std::cout << "Generated " << batch.size() << " ticks" << std::endl;
+    std::cout << "First tick price: $" << batch.front().price << std::endl;
+    std::cout << "Last tick price: $" << batch.back().price << std::endl;
+    
     std::cout << "\n=== All Tests Passed! ===" << std::endl;
     return 0;
 }
+
 
